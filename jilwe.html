@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <style>
+        * {
+            text-align: center;
+        }
+
+        #board {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #board tr td {
+            border: 1px solid white;
+            background: #34da79;
+            width: 16px;
+            height: 16px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        #board tr td.clicked {
+            background: #6c5ee7;
+        }
+
+        #board tr td.mine {
+            background: #FF0000;
+        }
+
+        #board tr td.revealed {
+            background: #eeeeee;
+            color: black;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>지뢰찾기</h1>
+    <table id="board"></table>
+    <button onclick="genGrid();">새로운 게임</button>
+    <script>
+        const rows = 8;
+        const cols = 8;
+        let grid = document.getElementById("board");
+        let gameEnded = false;
+        let mines = [];
+
+        function genGrid() {
+            grid.innerHTML = "";
+            mines = []; // Reset mines array
+            for (let i = 0; i < rows; i++) {
+                let row = grid.insertRow(i);
+                for (let j = 0; j < cols; j++) {
+                    let cell = row.insertCell(j);
+                    cell.onclick = function () { clickBox(this, i, j); };
+                    let mine = document.createAttribute("mine");
+                    if (Math.random() < 0.3) {
+                        mine.value = "true";
+                        mines.push({ row: i, col: j });
+                    } else {
+                        mine.value = "false";
+                    }
+                    cell.setAttributeNode(mine);
+                }
+            }
+            gameEnded = false;
+        }
+
+        function clickBox(cell, row, col) {
+            if (gameEnded || cell.classList.contains('revealed')) return;
+
+            if (cell.getAttribute("mine") == "true") {
+                cell.className = "mine";
+                alert("게임이 종료되었습니다.");
+                setTimeout(genGrid, 0);
+                gameEnded = true;
+            } else {
+                let mineCount = countMines(row, col);
+                cell.className = "revealed";
+                cell.textContent = mineCount > 0 ? mineCount : '';
+                if (mineCount === 0) {
+                    revealAdjacentCells(row, col);
+                }
+            }
+        }
+
+        function countMines(row, col) {
+            let count = 0;
+            for (let r = row - 1; r <= row + 1; r++) {
+                for (let c = col - 1; c <= col + 1; c++) {
+                    if (r >= 0 && r < rows && c >= 0 && c < cols && (r !== row || c !== col)) {
+                        let cell = grid.rows[r].cells[c];
+                        if (cell.getAttribute("mine") == "true") {
+                            count++;
+                        }
+                    }
+                }
+            }
+            return count;
+        }
+
+        function revealAdjacentCells(row, col) {
+            for (let r = row - 1; r <= row + 1; r++) {
+                for (let c = col - 1; c <= col + 1; c++) {
+                    if (r >= 0 && r < rows && c >= 0 && c < cols) {
+                        let cell = grid.rows[r].cells[c];
+                        if (!cell.classList.contains('revealed')) {
+                            clickBox(cell, r, c);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Initialize the game on load
+        window.onload = function() {
+            genGrid();
+        }
+    </script>
+</body>
+
+</html>
